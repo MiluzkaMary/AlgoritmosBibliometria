@@ -1,0 +1,4 @@
+undetected-chromedriver
+selenium
+aiohttp
+lxml
