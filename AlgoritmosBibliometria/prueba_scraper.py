@@ -32,31 +32,61 @@ def find_element(driver, locator, attempts=3):
 
 # Función para iniciar sesión en ScienceDirect con Google
 def login_sciencedirect(email, password):
-    driver.get("https://login.crai.referencistas.com/login?url=https://www.sciencedirect.com")
+    driver = uc.Chrome()
+    driver.get("https://login.crai.referencistas.com/login?url=https://www.sciencedirect.com/")
+    driver.maximize_window()
+
+    # Esperar y hacer clic en el botón "Iniciar sesión con Google"
+    wait = WebDriverWait(driver, 20)
+    google_button = wait.until(EC.element_to_be_clickable((By.XPATH, '//a[@id="btn-google"]')))
+    google_button.click()
+    print("Redirigiendo a Google...")
+    time.sleep(5)
 
     try:
-        # Esperar y hacer clic en el botón "Iniciar sesión con Google"
+        '''# Esperar y hacer clic en el botón "Iniciar sesión con Google"
         google_button = wait.until(EC.element_to_be_clickable((By.ID, "btn-google")))
         google_button.click()
         print("Redirigiendo a Google...")
-        time.sleep(5)
+        time.sleep(5)'''
+
+        print(f"URL actual después de clic en Google: {driver.current_url}")
+        if "accounts.google.com" not in driver.current_url:
+            print("No se redirigió correctamente a Google")
+            return
 
         # Intentar encontrar el campo de correo electrónico y enviar los datos
-        email_input = find_element(driver, (By.NAME, "identifier"))
+        email_input = find_element(driver, (By.XPATH, '//input[@type="email" and @name="identifier"]'))
         email_input.send_keys(email)
         email_input.send_keys(Keys.RETURN)
         #email_input.send_keys(Keys.ENTER)
         print("Redirigiendo a contraseña...")
 
-        time.sleep(2)
+        time.sleep(10)
+
+        # Verificar si se encuentra en la página de contraseña
+        print(f"URL actual después de clic en Google: {driver.current_url}")
+        if "accounts.google.com" not in driver.current_url:
+            print("No se redirigió correctamente a la página de contraseña")
+            return
 
         # Intentar encontrar el campo de contraseña y enviar los datos
-        password_input = find_element(driver, (By.NAME, "Passwd"))
+        password_input = find_element(driver, (By.XPATH, '//input[@type="password" and @name="Passwd"]'))
         password_input.send_keys(password)
         password_input.send_keys(Keys.RETURN)
 
+
         print("Sesión iniciada en Google")
         time.sleep(5)  # Esperar la redirección
+
+        # Verificar si se ha redirigido correctamente a ScienceDirect
+        print(f"URL actual después de clic en Google: {driver.current_url}")
+        if "https://www-sciencedirect-com.crai.referencistas.com/" in driver.current_url:
+            print("Inicio de sesión exitoso y redirigido a ScienceDirect")
+            
+        else:
+            print(f"Redirección fallida. URL actual: {driver.current_url}")
+        
 
     except TimeoutException as e:
         print(f"Error de tiempo de espera en el login: {e}")
@@ -67,22 +97,26 @@ def login_sciencedirect(email, password):
     except Exception as e:
         print(f"Error en el login: {e}")
         driver.quit()
+    print(f"AQUI EL LINK DE SCIENCE: {driver.current_url}")
 
 
 
 # Función para obtener los enlaces de artículos según la búsqueda
 def get_sciencedirect_articles(search_term):
     encoded_search = quote_plus(search_term)
-    search_url = f"https://www.sciencedirect.com/search?qs={encoded_search}"
-    driver.get(search_url)
+    search_url = f"https://www-sciencedirect-com.crai.referencistas.com/search?qs={encoded_search}"
+    driver = uc.Chrome()
+    #driver.get(search_url)   comentado
     time.sleep(5)
     print("entró a la url..." + search_url)
     
     try:
         # Esperar a que aparezcan resultados
         print("entró.1..")
-        wait.until(EC.presence_of_all_elements_located((By.XPATH, '//ol[@id="search-result-wrapper"]/li')))
-        articles = driver.find_elements(By.XPATH, '//ol[@id="search-result-wrapper"]/li')
+        wait = WebDriverWait(driver, 10)
+        wait.until(EC.presence_of_all_elements_located((By.XPATH, '//ul[@id="srp-results-list"]//li[contains(@class, "ResultItem")]')))
+        print("primer filtro")
+        articles = driver.find_elements(By.XPATH, '//div[contains(@class, "search-result-wrapper")]')
         article_links = []
         print("entró...")
 
@@ -107,7 +141,7 @@ def get_sciencedirect_articles(search_term):
 
 # Función para extraer detalles de un artículo
 def get_article_details(article_url):
-    driver.get(article_url)
+    #driver.get(article_url)  comentado
 
     try:
         title = wait.until(EC.presence_of_element_located((By.TAG_NAME, "h1"))).text.strip()
@@ -159,7 +193,7 @@ if __name__ == "__main__":
         else:
             print("No se encontraron artículos.")
 
-    driver.quit # Cierra el navegador
+    driver.quit() # Cierra el navegador
     
 
 
