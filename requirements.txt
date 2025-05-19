@@ -1,4 +1,9 @@
-undetected-chromedriver
-selenium
-aiohttp
-lxml
+Flask
+matplotlib
+seaborn
+pandas
+wordcloud
+networkx
+python-louvain
+adjustText
+numpy
